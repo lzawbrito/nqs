@@ -13,11 +13,8 @@ from wilson import *
 
 class EquivariantCNN(nn.Module): 
     # include parameters like hidden size here: 
-    graph = None
     kernel_size = (3, 3)
 
-    # compact lets you define all the layers IN call as opposed to in init like 
-    # in tensorflow. I can imagine that for skip connections this might be bad. 
     @nn.compact 
     def __call__(self, loops, lines): 
         # Input should be of shape (B, N); B = batch size, N = number of dofs
