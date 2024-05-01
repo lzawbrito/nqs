@@ -55,12 +55,19 @@ class InvariantCNN(nn.Module):
 
 
 class GENN(nn.Module): 
+    graph = None
     @nn.compact 
     def __call__(self, x): 
         # TODO 
+        L = np.sqrt(self.graph.n_nodes)
         x = ordered_edges(x)
         w_loops, w_lines_left, w_lines_up = get_wilson_loops_and_lines(x, np.sqrt(x.n_nodes))
-        eq = EquivariantCNN()(w_loops, w_lines_left + w_lines_up)
+        w_loops = w_loops.reshape((L, L))
+        w_lines_left = w_lines_left.reshape((L, L))
+        w_lines_up = w_lines_up.reshape((L, L))
+        print(type(w_lines_up))
+        lines = [w_lines_left, w_lines_up] # convert to flax tensor type
+        eq = EquivariantCNN()(w_loops, lines)
         skip = x + eq
         out = InvariantCNN()(skip)
         return out
