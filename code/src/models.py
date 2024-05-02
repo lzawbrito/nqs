@@ -28,7 +28,6 @@ class EquivariantCNN(nn.Module):
 
         w_loops = nn.activation.leaky_relu(w_loops)
 
-        # TODO reshape w_loops. w_lines is [vertical_edges, horizontal_edges]
         pointwise = lines * w_loops
 
         return pointwise
