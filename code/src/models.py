@@ -95,7 +95,6 @@ class GENN(nn.Module):
         skip = x + eq.reshape(-1, 2 * self.L**2)
         w_loops, _, _  = get_wilson_loops_and_lines(skip, self.L)
         w_loops = np.expand_dims(w_loops.reshape(-1, self.L, self.L), -1)
-        print(w_loops.shape)
         out = InvariantCNN(L=self.L)(w_loops)
 
         return out
