@@ -38,14 +38,6 @@ class InvariantCNN(nn.Module):
 
     @nn.compact 
     def __call__(self, x): 
-        """
-        w_loops = wilson_loops(x)
-        cnn1 = conv(w_loops) 
-        cnn2 = conv(w_loops) 
-        out1 = log(abs(elu(avg_pool(cnn1))))
-        out2 = arg(softsign(avg_pool(cnn2)))/pi
-        return out1, out2 (actually, 75% sure you just add them together)
-        """
         w_loops = nn.Conv(features=2, 
                           kernel_size=self.kernel_size, 
                           strides=1, 
