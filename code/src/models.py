@@ -83,3 +83,34 @@ class GENN(nn.Module):
         return out
 
 
+class GERB(nn.Module): 
+
+    graph: nk.graph.Graph = None
+
+    def setup(self): 
+        self.L = int(math.sqrt(self.graph.n_nodes))
+
+    @nn.compact 
+    def __call__(self, x): 
+        w_loops, w_lines_left, w_lines_up = get_wilson_loops_and_lines(x, self.L)
+        w_loops = w_loops.reshape(-1, self.L, self.L)
+
+        w_lines_left = w_lines_left.reshape(-1, self.L, self.L)
+        w_lines_up = w_lines_up.reshape(-1, self.L, self.L)
+
+        lines = np.append(np.expand_dims(w_lines_left, -1), 
+                          np.expand_dims(w_lines_up, -1),
+                          axis=-1)
+
+        eq = EquivariantCNN()(w_loops, lines)
+
+        skip = x + eq.reshape(-1, 2 * self.L**2)
+        # print(skip.shape)
+        w_loops, _, _  = get_wilson_loops_and_lines(skip, self.L)
+        # print(w_loops.shape)
+        w_loops = np.expand_dims(w_loops.reshape(-1, self.L, self.L), -1)
+        out = InvariantCNN(L=self.L)(w_loops)
+        # jax.debug.print("out {bar}", bar=out)
+        return out
+
+
