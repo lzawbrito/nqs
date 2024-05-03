@@ -83,7 +83,7 @@ class GENN(nn.Module):
         return out
 
 
-class GERB(nn.Module): 
+class GERBIL(nn.Module): 
 
     graph: nk.graph.Graph = None
 
