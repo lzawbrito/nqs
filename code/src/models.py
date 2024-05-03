@@ -157,9 +157,8 @@ class GERBIL(nn.Module):
     @nn.compact 
     def __call__(self, x): 
 
-        sig = x[2:3, :, :]  # Extract the first slice
-        x = x[0:2, :, :]
-
+        sig = x[:, 2(self.L**2):]  # Extract the first slice
+        x = x[:, :2(self.L**2)]
 
         w_loops, w_lines_left, w_lines_up = get_wilson_loops_and_lines(x, self.L)
         w_loops = w_loops.reshape(-1, self.L, self.L)
@@ -181,9 +180,28 @@ class GERBIL(nn.Module):
         w_loops = np.expand_dims(w_loops.reshape(-1, self.L, self.L), -1)
         out = InvariantCNN(L=self.L)(w_loops)
 
-        rbm = nk.models.RBM(alpha=1*(max(1, self.L/10)), param_dtype=complex, kernel_init=nn.initializers.normal(stddev=0.01))
-        sampler = nk.sampler.MetropolisLocal()
-        rbm_output = np.log(np.cosh(rbm_output))
+        # RBM Layer on sigs
+        rbm_layer = nn.Dense(
+            name="RBM",
+            features=int((max(1, self.L/10)) * sig.shape[-1]),
+            param_dtype=np.float64,
+            precision=None,
+            use_bias=True,
+            kernel_init=default_kernel_init,
+            bias_init=default_kernel_init,
+        )(sig)
+        rbm_output = nknn.log_cosh(rbm_layer)
+        rbm_output = np.sum(rbm_output, axis=-1)
+
+        v_bias = self.param(
+            "visible_bias",
+            default_kernel_init,
+            (input.shape[-1],),
+            np.float64,
+        )
+        rbm_output = rbm_output + np.dot(input, v_bias)
+
+        #rbm_output = np.log(np.cosh(rbm_output))
         out = out + rbm_output
         # jax.debug.print("out {bar}", bar=out)
         return out
