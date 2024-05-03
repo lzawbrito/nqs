@@ -22,12 +22,13 @@ def ordered_edges(graph):
     
     return a
 
-def plaquette(i, x, L): 
-    left  = x[i] 
-    right = x[int(L * (i // L) + (i + 1) % L)]
-    upper = x[i + L**2]
-    lower = x[(i + L) % (L**2) + L**2]
-    return left, right, upper, lower
+def plaquette_indices(i, L): 
+    """
+    Outputs: 
+    - L, R, U, D, indices
+    """
+    #left, right, upper, lower
+    return i, int(L * (i // L) + (i + 1) % L), i + L**2, (i + L) % (L**2) + L**2 
 
 
 def get_wilson_loops_and_lines(x, L):
@@ -45,9 +46,9 @@ def get_wilson_loops_and_lines(x, L):
     wilson_loops      = []
     wilson_paths_left = []
     wilson_paths_up   = []
-
     for i in range(L**2):
-        left, right, upper, lower = plaquette(i, x, L)
+        l, r, u, d = plaquette_indices(i, L)
+        left, right, upper, lower = x[:, l], x[:, r], x[:, u], x[:, d]
 
         wilson_loops.append(left * right * lower * upper) # feels like there should be more efficient way instead of appending
         wilson_paths_up.append(left * lower * right)
