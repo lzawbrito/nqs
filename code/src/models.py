@@ -13,6 +13,19 @@ import netket as nk
 from src.wilson import * 
 import math
 
+from typing import Union, Any
+
+from flax import linen as nn
+from jax.nn.initializers import normal
+
+from netket.utils import HashableArray
+from netket.utils.types import NNInitFunc
+from netket.utils.group import PermutationGroup
+from netket import nn as nknn
+
+default_kernel_init = normal(stddev=0.01)
+
+
 class EquivariantCNN(nn.Module): 
     # include parameters like hidden size here: 
     kernel_size = 3
@@ -81,6 +94,57 @@ class GENN(nn.Module):
         out = InvariantCNN(L=self.L)(w_loops)
         # jax.debug.print("out {bar}", bar=out)
         return out
+
+class RBM(nn.Module):
+    r"""A restricted boltzman Machine, equivalent to a 2-layer FFNN with a
+    nonlinear activation function in between.
+    """
+
+    param_dtype: Any = np.float64
+    """The dtype of the weights."""
+    activation: Any = nknn.log_cosh
+    """The nonlinear activation function."""
+    alpha: Union[float, int] = 1
+    """feature density. Number of features equal to alpha * input.shape[-1]"""
+    use_hidden_bias: bool = True
+    """if True uses a bias in the dense layer (hidden layer bias)."""
+    use_visible_bias: bool = True
+    """if True adds a bias to the input not passed through the nonlinear layer."""
+    precision: Any = None
+    """numerical precision of the computation see :class:`jax.lax.Precision` for details."""
+
+    kernel_init: NNInitFunc = default_kernel_init
+    """Initializer for the Dense layer matrix."""
+    hidden_bias_init: NNInitFunc = default_kernel_init
+    """Initializer for the hidden bias."""
+    visible_bias_init: NNInitFunc = default_kernel_init
+    """Initializer for the visible bias."""
+
+    @nn.compact
+    def __call__(self, input):
+        x = nn.Dense(
+            name="Dense",
+            features=int(self.alpha * input.shape[-1]),
+            param_dtype=self.param_dtype,
+            precision=self.precision,
+            use_bias=self.use_hidden_bias,
+            kernel_init=self.kernel_init,
+            bias_init=self.hidden_bias_init,
+        )(input)
+        x = self.activation(x)
+        x = np.sum(x, axis=-1)
+
+        if self.use_visible_bias:
+            v_bias = self.param(
+                "visible_bias",
+                self.visible_bias_init,
+                (input.shape[-1],),
+                self.param_dtype,
+            )
+            out_bias = np.dot(input, v_bias)
+            return x + out_bias
+        else:
+            return x
 
 
 class GERBIL(nn.Module): 
