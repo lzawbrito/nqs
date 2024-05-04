@@ -188,7 +188,7 @@ class GERBIL(nn.Module):
         rbm_layer = nn.Dense(
             name="RBM",
             features=int((max(1, self.L/10)) * sig.shape[-1]),
-            param_dtype=np.float64,
+            param_dtype=np.float32,
             precision=None,
             use_bias=True,
             kernel_init=default_kernel_init,
@@ -201,7 +201,7 @@ class GERBIL(nn.Module):
             "visible_bias",
             default_kernel_init,
             (sig.shape[-1],),
-            np.float64,
+            np.float32,
         )
         out_bias = np.dot(sig, v_bias)
         rbm_output = rbm_output + out_bias
