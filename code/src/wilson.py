@@ -6,14 +6,14 @@ TODO
 should try to use flax so that it is differentiable
 """
 
-import jax.numpy as np
+import jax.numpy as jnp
 
 def ordered_edges(graph): 
     """
     Assumes square LxL lattice.
     """
     a = [] 
-    L = np.sqrt(graph.n_nodes)
+    L = jnp.sqrt(graph.n_nodes)
     for x in graph.nodes(): 
         a.append((x, int((x + L) % graph.n_nodes)))
     
@@ -29,6 +29,14 @@ def plaquette_indices(i, L):
     """
     #left, right, upper, lower
     return i, int(L * (i // L) + (i + 1) % L), i + L**2, (i + L) % (L**2) + L**2 
+
+
+def wilson_loop_indices(l, L):
+    left_edge = list(range(l))
+    upper_edge = [i * L + L**2 for i in range(l)]
+    right_edge = [i + L * (l - 1) for i in range(l)]
+    bottom_edge = [i * L + L + L**2 for i in range(l)] 
+    return upper_edge, left_edge, bottom_edge, right_edge
 
 
 def get_wilson_loops_and_lines(x, L):
@@ -54,5 +62,5 @@ def get_wilson_loops_and_lines(x, L):
         wilson_paths_up.append(left * lower * right)
         wilson_paths_left.append(upper * right * upper)
 
-    return np.array(wilson_loops).T, np.array(wilson_paths_left).T, np.array(wilson_paths_up).T
+    return jnp.array(wilson_loops).T, jnp.array(wilson_paths_left).T, jnp.array(wilson_paths_up).T
 
