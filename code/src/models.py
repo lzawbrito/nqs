@@ -156,7 +156,6 @@ class GERBIL(nn.Module):
 
     @nn.compact 
     def __call__(self, x): 
-
         sig = x[:, 2 * (self.L**2):]  # Extract the first slice
         # sig = sig.reshape(-1, self.L, self.L)
         # sig = np.expand_dims(sig, -1)
@@ -178,9 +177,10 @@ class GERBIL(nn.Module):
         skip1 = x + eq.reshape(-1, 2 * self.L**2)
         skip1 = skip1.reshape(-1, self.L, self.L, 2)
         skip2 = skip1 * sig_reshaped
-        # print(skip.shape)
+        skip2 = skip2.reshape(-1, 2 * self.L**2)
+        #print("skip2", skip2.shape)
         w_loops, _, _  = get_wilson_loops_and_lines(skip2, self.L)
-        # print(w_loops.shape)
+        #print("w loops shape", w_loops.shape)
         w_loops = np.expand_dims(w_loops.reshape(-1, self.L, self.L), -1)
         out = InvariantCNN(L=self.L)(w_loops)
 
