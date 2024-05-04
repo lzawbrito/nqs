@@ -157,8 +157,10 @@ class GERBIL(nn.Module):
     @nn.compact 
     def __call__(self, x): 
 
-        sig = x[:, 2(self.L**2):]  # Extract the first slice
-        x = x[:, :2(self.L**2)]
+        sig = x[:, 2 * (self.L**2):]  # Extract the first slice
+        sig = sig.reshape(-1, self.L, self.L)
+        sig = np.expand_dims(sig, -1)
+        x = x[:, :2 * (self.L**2)]
 
         w_loops, w_lines_left, w_lines_up = get_wilson_loops_and_lines(x, self.L)
         w_loops = w_loops.reshape(-1, self.L, self.L)
@@ -196,10 +198,11 @@ class GERBIL(nn.Module):
         v_bias = self.param(
             "visible_bias",
             default_kernel_init,
-            (input.shape[-1],),
+            (rbm_output.shape[-1],),
             np.float64,
         )
-        rbm_output = rbm_output + np.dot(input, v_bias)
+
+        rbm_output = rbm_output + np.dot(rbm_output, v_bias)
 
         #rbm_output = np.log(np.cosh(rbm_output))
         out = out + rbm_output
