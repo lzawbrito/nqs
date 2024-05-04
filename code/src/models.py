@@ -160,7 +160,7 @@ class GERBIL(nn.Module):
         sig = x[:, 2 * (self.L**2):]  # Extract the first slice
         # sig = sig.reshape(-1, self.L, self.L)
         # sig = np.expand_dims(sig, -1)
-        sig = sig.reshape(-1, self.L, self.L, 1)
+        sig_reshaped = sig.reshape(-1, self.L, self.L, 1)
         x = x[:, :2 * (self.L**2)]
 
         w_loops, w_lines_left, w_lines_up = get_wilson_loops_and_lines(x, self.L)
@@ -176,7 +176,8 @@ class GERBIL(nn.Module):
         eq = EquivariantCNN()(w_loops, lines)
 
         skip1 = x + eq.reshape(-1, 2 * self.L**2)
-        skip2 = skip1 * sig
+        skip1 = skip1.reshape(-1, self.L, self.L, 2)
+        skip2 = skip1 * sig_reshaped
         # print(skip.shape)
         w_loops, _, _  = get_wilson_loops_and_lines(skip2, self.L)
         # print(w_loops.shape)
@@ -194,16 +195,16 @@ class GERBIL(nn.Module):
             bias_init=default_kernel_init,
         )(sig)
         rbm_output = nknn.log_cosh(rbm_layer)
-        rbm_output = np.sum(rbm_output, axis=(-2, -3))
+        rbm_output = np.sum(rbm_output, axis=-1)
 
         v_bias = self.param(
             "visible_bias",
             default_kernel_init,
-            (rbm_output.shape[-1],),
+            (sig.shape[-1],),
             np.float64,
         )
-
-        rbm_output = rbm_output + np.dot(rbm_output, v_bias)
+        out_bias = np.dot(sig, v_bias)
+        rbm_output = rbm_output + out_bias
 
         #rbm_output = np.log(np.cosh(rbm_output))
         out = out + rbm_output
