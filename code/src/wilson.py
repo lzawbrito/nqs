@@ -32,11 +32,15 @@ def plaquette_indices(i, L):
 
 
 def wilson_loop_indices(l, L):
-    left_edge = list(range(l))
-    upper_edge = [i * L + L**2 for i in range(l)]
-    right_edge = [i + L * (l - 1) for i in range(l)]
-    bottom_edge = [i * L + L + L**2 for i in range(l)] 
-    return upper_edge, left_edge, bottom_edge, right_edge
+    out = [] 
+
+    for i in range(l): 
+        out.append(L**2 + i)
+        out.append(i * (L + 1))
+        out.append(L**2 + i + l * L)
+        out.append(i * (L + 1) + l)
+
+    return out
 
 
 def get_wilson_loops_and_lines(x, L):
